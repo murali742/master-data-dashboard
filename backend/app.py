@@ -6,136 +6,144 @@ app = Flask(__name__)
 CORS(app)
 
 
-db = mysql.connector.connect(
-    host="localhost",
-    user="root",
-    password="Murali26",
-    database="master_data_db"
-)
+def get_db_connection():
+    return mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="Murali26",
+        database="master_data_db",
+        autocommit=True
+    )
 
 
 @app.route("/")
 def home():
-    return "Backend is running!"
+    return jsonify({"message": "Backend running"}), 200
+
 
 
 
 @app.route("/units", methods=["GET"])
 def get_units():
-    cursor = db.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM units")
-    result = cursor.fetchall()
-    cursor.close()
-    return jsonify(result)
+    try:
+        db = get_db_connection()
+        cursor = db.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM units")
+        result = cursor.fetchall()
+        cursor.close()
+        db.close()
+        return jsonify(result), 200
+    except Exception as e:
+        return jsonify([]), 500
 
 
 @app.route("/units", methods=["POST"])
 def add_unit():
-    data = request.json
-
-    cursor = db.cursor()
-    cursor.execute(
-        "INSERT INTO units (name, symbol, description) VALUES (%s, %s, %s)",
-        (data.get("name"), data.get("symbol"), data.get("description"))
-    )
-    db.commit()
-    cursor.close()
-
-    return jsonify({"message": "Unit added successfully!"})
+    try:
+        data = request.json
+        db = get_db_connection()
+        cursor = db.cursor()
+        cursor.execute(
+            "INSERT INTO units (name, symbol, description) VALUES (%s, %s, %s)",
+            (data["name"], data["symbol"], data["description"])
+        )
+        cursor.close()
+        db.close()
+        return jsonify({"message": "Unit added"}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/units/<int:id>", methods=["PUT"])
 def update_unit(id):
-    data = request.json
-
-    cursor = db.cursor()
-    cursor.execute(
-        "UPDATE units SET name=%s, symbol=%s, description=%s WHERE id=%s",
-        (data.get("name"), data.get("symbol"), data.get("description"), id)
-    )
-    db.commit()
-    cursor.close()
-
-    return jsonify({"message": "Unit updated successfully!"})
+    try:
+        data = request.json
+        db = get_db_connection()
+        cursor = db.cursor()
+        cursor.execute(
+            "UPDATE units SET name=%s, symbol=%s, description=%s WHERE id=%s",
+            (data["name"], data["symbol"], data["description"], id)
+        )
+        cursor.close()
+        db.close()
+        return jsonify({"message": "Unit updated"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/units/<int:id>", methods=["DELETE"])
 def delete_unit(id):
-    cursor = db.cursor()
-    cursor.execute("DELETE FROM units WHERE id=%s", (id,))
-    db.commit()
-    cursor.close()
-
-    return jsonify({"message": "Unit deleted successfully!"})
+    try:
+        db = get_db_connection()
+        cursor = db.cursor()
+        cursor.execute("DELETE FROM units WHERE id=%s", (id,))
+        cursor.close()
+        db.close()
+        return jsonify({"message": "Unit deleted"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 
 @app.route("/shifts", methods=["GET"])
 def get_shifts():
-    cursor = db.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM shifts")
-    result = cursor.fetchall()
-    cursor.close()
-
-    # 🔥 FIX: Convert TIME fields to string
-    for row in result:
-        if row["start_time"]:
-            row["start_time"] = str(row["start_time"])
-        if row["end_time"]:
-            row["end_time"] = str(row["end_time"])
-
-    return jsonify(result)
+    try:
+        db = get_db_connection()
+        cursor = db.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM shifts")
+        result = cursor.fetchall()
+        cursor.close()
+        db.close()
+        return jsonify(result), 200
+    except Exception:
+        return jsonify([]), 500
 
 
 @app.route("/shifts", methods=["POST"])
 def add_shift():
-    data = request.json
-
-    cursor = db.cursor()
-    cursor.execute(
-        "INSERT INTO shifts (name, start_time, end_time, color) VALUES (%s, %s, %s, %s)",
-        (
-            data.get("name"),
-            data.get("start_time"),
-            data.get("end_time"),
-            data.get("color")
+    try:
+        data = request.json
+        db = get_db_connection()
+        cursor = db.cursor()
+        cursor.execute(
+            "INSERT INTO shifts (name, start_time, end_time, color) VALUES (%s, %s, %s, %s)",
+            (data["name"], data["start_time"], data["end_time"], data["color"])
         )
-    )
-    db.commit()
-    cursor.close()
-
-    return jsonify({"message": "Shift added successfully!"})
+        cursor.close()
+        db.close()
+        return jsonify({"message": "Shift added"}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/shifts/<int:id>", methods=["PUT"])
 def update_shift(id):
-    data = request.json
-
-    cursor = db.cursor()
-    cursor.execute(
-        "UPDATE shifts SET name=%s, start_time=%s, end_time=%s, color=%s WHERE id=%s",
-        (
-            data.get("name"),
-            data.get("start_time"),
-            data.get("end_time"),
-            data.get("color"),
-            id
+    try:
+        data = request.json
+        db = get_db_connection()
+        cursor = db.cursor()
+        cursor.execute(
+            "UPDATE shifts SET name=%s, start_time=%s, end_time=%s, color=%s WHERE id=%s",
+            (data["name"], data["start_time"], data["end_time"], data["color"], id)
         )
-    )
-    db.commit()
-    cursor.close()
-
-    return jsonify({"message": "Shift updated successfully!"})
+        cursor.close()
+        db.close()
+        return jsonify({"message": "Shift updated"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/shifts/<int:id>", methods=["DELETE"])
 def delete_shift(id):
-    cursor = db.cursor()
-    cursor.execute("DELETE FROM shifts WHERE id=%s", (id,))
-    db.commit()
-    cursor.close()
-
-    return jsonify({"message": "Shift deleted successfully!"})
+    try:
+        db = get_db_connection()
+        cursor = db.cursor()
+        cursor.execute("DELETE FROM shifts WHERE id=%s", (id,))
+        cursor.close()
+        db.close()
+        return jsonify({"message": "Shift deleted"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == "__main__":

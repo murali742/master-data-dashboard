@@ -3,15 +3,14 @@ import React, { useEffect, useState } from "react";
 const API = "http://127.0.0.1:5000";
 
 function App() {
- 
   const [units, setUnits] = useState([]);
+  const [shifts, setShifts] = useState([]);
+
   const [name, setName] = useState("");
   const [symbol, setSymbol] = useState("");
   const [description, setDescription] = useState("");
   const [editId, setEditId] = useState(null);
 
-  
-  const [shifts, setShifts] = useState([]);
   const [shiftName, setShiftName] = useState("");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
@@ -20,15 +19,23 @@ function App() {
 
   
   const fetchUnits = async () => {
-    const res = await fetch(`${API}/units`);
-    const data = await res.json();
-    setUnits(data);
+    try {
+      const res = await fetch(`${API}/units`);
+      const data = await res.json();
+      setUnits(Array.isArray(data) ? data : []);
+    } catch {
+      setUnits([]);
+    }
   };
 
   const fetchShifts = async () => {
-    const res = await fetch(`${API}/shifts`);
-    const data = await res.json();
-    setShifts(data);
+    try {
+      const res = await fetch(`${API}/shifts`);
+      const data = await res.json();
+      setShifts(Array.isArray(data) ? data : []);
+    } catch {
+      setShifts([]);
+    }
   };
 
   useEffect(() => {
@@ -37,12 +44,8 @@ function App() {
   }, []);
 
   
-  const handleUnitSubmit = async () => {
-    if (!name || !symbol) {
-      alert("Name and Symbol required");
-      return;
-    }
 
+  const handleUnitSubmit = async () => {
     const method = editId ? "PUT" : "POST";
     const url = editId ? `${API}/units/${editId}` : `${API}/units`;
 
@@ -52,7 +55,10 @@ function App() {
       body: JSON.stringify({ name, symbol, description }),
     });
 
-    resetUnitForm();
+    setName("");
+    setSymbol("");
+    setDescription("");
+    setEditId(null);
     fetchUnits();
   };
 
@@ -68,20 +74,9 @@ function App() {
     setEditId(unit.id);
   };
 
-  const resetUnitForm = () => {
-    setName("");
-    setSymbol("");
-    setDescription("");
-    setEditId(null);
-  };
-
   
-  const handleShiftSubmit = async () => {
-    if (!shiftName || !startTime || !endTime) {
-      alert("All shift fields required");
-      return;
-    }
 
+  const handleShiftSubmit = async () => {
     const method = editShiftId ? "PUT" : "POST";
     const url = editShiftId
       ? `${API}/shifts/${editShiftId}`
@@ -98,7 +93,11 @@ function App() {
       }),
     });
 
-    resetShiftForm();
+    setShiftName("");
+    setStartTime("");
+    setEndTime("");
+    setColor("");
+    setEditShiftId(null);
     fetchShifts();
   };
 
@@ -115,121 +114,69 @@ function App() {
     setEditShiftId(shift.id);
   };
 
-  const resetShiftForm = () => {
-    setShiftName("");
-    setStartTime("");
-    setEndTime("");
-    setColor("");
-    setEditShiftId(null);
-  };
-
-  
   return (
-    <div style={{ padding: "30px", fontFamily: "Arial" }}>
+    <div style={{ padding: 30, fontFamily: "Arial" }}>
       <h1>Master Data Dashboard</h1>
 
-      
-
-      <input
-        placeholder="Name"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-      />
-      <input
-        placeholder="Symbol"
-        value={symbol}
-        onChange={(e) => setSymbol(e.target.value)}
-      />
-      <input
-        placeholder="Description"
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-      />
+      {/* UNITS */}
+      <h2>Units</h2>
+      <input placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
+      <input placeholder="Symbol" value={symbol} onChange={(e) => setSymbol(e.target.value)} />
+      <input placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} />
       <button onClick={handleUnitSubmit}>
         {editId ? "Update Unit" : "Add Unit"}
       </button>
 
-      <table border="1" cellPadding="10" style={{ marginTop: "20px" }}>
+      <table border="1" cellPadding="10" style={{ marginTop: 20 }}>
         <thead>
           <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Symbol</th>
-            <th>Description</th>
-            <th>Actions</th>
+            <th>ID</th><th>Name</th><th>Symbol</th><th>Description</th><th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          {units.map((unit) => (
-            <tr key={unit.id}>
-              <td>{unit.id}</td>
-              <td>{unit.name}</td>
-              <td>{unit.symbol}</td>
-              <td>{unit.description}</td>
+          {units.map((u) => (
+            <tr key={u.id}>
+              <td>{u.id}</td>
+              <td>{u.name}</td>
+              <td>{u.symbol}</td>
+              <td>{u.description}</td>
               <td>
-                <button onClick={() => editUnit(unit)}>Edit</button>
-                <button onClick={() => deleteUnit(unit.id)}>Delete</button>
+                <button onClick={() => editUnit(u)}>Edit</button>
+                <button onClick={() => deleteUnit(u.id)}>Delete</button>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
 
-     
-      <h2 style={{ marginTop: "50px" }}>Shifts</h2>
+      {/* SHIFTS */}
+      <h2 style={{ marginTop: 50 }}>Shifts</h2>
 
-      <input
-        placeholder="Shift Name"
-        value={shiftName}
-        onChange={(e) => setShiftName(e.target.value)}
-      />
-      <input
-        type="time"
-        value={startTime}
-        onChange={(e) => setStartTime(e.target.value)}
-      />
-      <input
-        type="time"
-        value={endTime}
-        onChange={(e) => setEndTime(e.target.value)}
-      />
-      <input
-        placeholder="Color (red, blue, #ff0000)"
-        value={color}
-        onChange={(e) => setColor(e.target.value)}
-      />
+      <input placeholder="Shift Name" value={shiftName} onChange={(e) => setShiftName(e.target.value)} />
+      <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+      <input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+      <input placeholder="Color (red, blue, #00ff00)" value={color} onChange={(e) => setColor(e.target.value)} />
       <button onClick={handleShiftSubmit}>
         {editShiftId ? "Update Shift" : "Add Shift"}
       </button>
 
-      <table border="1" cellPadding="10" style={{ marginTop: "20px" }}>
+      <table border="1" cellPadding="10" style={{ marginTop: 20 }}>
         <thead>
           <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Start</th>
-            <th>End</th>
-            <th>Color</th>
-            <th>Actions</th>
+            <th>ID</th><th>Name</th><th>Start</th><th>End</th><th>Color</th><th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          {shifts.map((shift) => (
-            <tr
-              key={shift.id}
-              style={{
-                backgroundColor: shift.color,
-                color: "white"
-              }}
-            >
-              <td>{shift.id}</td>
-              <td>{shift.name}</td>
-              <td>{shift.start_time}</td>
-              <td>{shift.end_time}</td>
-              <td>{shift.color}</td>
+          {shifts.map((s) => (
+            <tr key={s.id} style={{ backgroundColor: s.color, color: "white" }}>
+              <td>{s.id}</td>
+              <td>{s.name}</td>
+              <td>{s.start_time}</td>
+              <td>{s.end_time}</td>
+              <td>{s.color}</td>
               <td>
-                <button onClick={() => editShift(shift)}>Edit</button>
-                <button onClick={() => deleteShift(shift.id)}>Delete</button>
+                <button onClick={() => editShift(s)}>Edit</button>
+                <button onClick={() => deleteShift(s.id)}>Delete</button>
               </td>
             </tr>
           ))}
